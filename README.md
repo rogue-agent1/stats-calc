@@ -1,6 +1,17 @@
 # stats_calc
-Single-file Python CLI tool. Zero dependencies, Python 3.8+.
+
+Statistical calculations (mean, median, mode, std dev, percentiles)
+
+Single-file, zero-dependency Python CLI tool.
+
 ## Usage
+
 ```bash
-python3 stats_calc.py --test
+python stats_calc.py --help
+```
+
+## Test
+
+```bash
+python -c "import stats_calc; stats_calc.test()"
 ```
