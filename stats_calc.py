@@ -1,42 +1,64 @@
-import sys, argparse, math
+#!/usr/bin/env python3
+"""stats_calc: Statistical calculations (mean, median, stdev, percentile, correlation)."""
+import math, sys
 
-def mean(v): return sum(v)/len(v)
-def median(v):
-    s = sorted(v); n = len(s)
-    return s[n//2] if n%2 else (s[n//2-1]+s[n//2])/2
-def mode(v):
-    from collections import Counter
-    c = Counter(v)
-    mx = max(c.values())
-    return [k for k,v in c.items() if v == mx]
-def stdev(v):
-    m = mean(v)
-    return math.sqrt(sum((x-m)**2 for x in v) / (len(v)-1))
-def percentile(v, p):
-    s = sorted(v)
-    k = (len(s)-1) * p / 100
-    f = int(k); c = f+1 if f+1 < len(s) else f
-    return s[f] + (k-f) * (s[c]-s[f])
+def mean(data): return sum(data) / len(data)
 
-def main():
-    p = argparse.ArgumentParser(description="Statistics calculator")
-    p.add_argument("values", nargs="*", type=float)
-    p.add_argument("-p", "--percentile", type=float)
-    args = p.parse_args()
-    vals = args.values or [float(x) for x in sys.stdin.read().split()]
-    if not vals: print("No data"); return
-    print(f"n:      {len(vals)}")
-    print(f"sum:    {sum(vals):.4f}")
-    print(f"mean:   {mean(vals):.4f}")
-    print(f"median: {median(vals):.4f}")
-    print(f"mode:   {mode(vals)}")
-    print(f"min:    {min(vals):.4f}")
-    print(f"max:    {max(vals):.4f}")
-    print(f"range:  {max(vals)-min(vals):.4f}")
-    if len(vals) > 1: print(f"stdev:  {stdev(vals):.4f}")
-    print(f"p25:    {percentile(vals, 25):.4f}")
-    print(f"p75:    {percentile(vals, 75):.4f}")
-    print(f"p90:    {percentile(vals, 90):.4f}")
+def median(data):
+    s = sorted(data); n = len(s)
+    if n % 2 == 1: return s[n//2]
+    return (s[n//2-1] + s[n//2]) / 2
+
+def variance(data, ddof=1):
+    m = mean(data)
+    return sum((x - m)**2 for x in data) / (len(data) - ddof)
+
+def stdev(data, ddof=1): return math.sqrt(variance(data, ddof))
+
+def percentile(data, p):
+    s = sorted(data); n = len(s)
+    k = (p / 100) * (n - 1)
+    f = int(k); c = min(f + 1, n - 1)
+    return s[f] + (k - f) * (s[c] - s[f])
+
+def correlation(x, y):
+    n = len(x); mx, my = mean(x), mean(y)
+    cov = sum((x[i]-mx)*(y[i]-my) for i in range(n))
+    sx = math.sqrt(sum((xi-mx)**2 for xi in x))
+    sy = math.sqrt(sum((yi-my)**2 for yi in y))
+    if sx == 0 or sy == 0: return 0
+    return cov / (sx * sy)
+
+def linear_regression(x, y):
+    n = len(x); mx, my = mean(x), mean(y)
+    ss_xy = sum((x[i]-mx)*(y[i]-my) for i in range(n))
+    ss_xx = sum((xi-mx)**2 for xi in x)
+    if ss_xx == 0: return (my, 0)
+    slope = ss_xy / ss_xx
+    intercept = my - slope * mx
+    return (intercept, slope)
+
+def test():
+    data = [2, 4, 4, 4, 5, 5, 7, 9]
+    assert mean(data) == 5.0
+    assert median(data) == 4.5
+    assert abs(stdev(data) - 2.138) < 0.001
+    assert percentile(data, 50) == 4.5
+    assert percentile(data, 0) == 2
+    assert percentile(data, 100) == 9
+    # Correlation
+    x = [1, 2, 3, 4, 5]
+    y = [2, 4, 6, 8, 10]
+    assert abs(correlation(x, y) - 1.0) < 1e-9
+    # Regression
+    intercept, slope = linear_regression(x, y)
+    assert abs(slope - 2.0) < 1e-9
+    assert abs(intercept - 0.0) < 1e-9
+    # Anti-correlation
+    y2 = [10, 8, 6, 4, 2]
+    assert abs(correlation(x, y2) - (-1.0)) < 1e-9
+    print("All tests passed!")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "test": test()
+    else: print("Usage: stats_calc.py test")

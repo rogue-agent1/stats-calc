@@ -1,9 +1,11 @@
-# stats-calc
+# stats_calc
 
-Statistics calculator (mean, median, stdev, etc.). Zero-dependency, single-file Python CLI.
+stats_calc: Statistical calculations (mean, median, stdev, percentile, correlation).
+
+Single-file, zero-dependency Python CLI.
 
 ## Usage
 
 ```bash
-python3 stats_calc.py --help
+python3 stats_calc.py test
 ```
